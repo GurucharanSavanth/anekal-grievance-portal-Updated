@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anekal Grievance Redressal Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .form-step { display: none; }
+        .form-step.active { display: block; }
+        .step { transition: background-color 0.3s ease; }
+        .step-active { background-color: #3b82f6; color: white; }
+        .step-completed { background-color: #22c55e; color: white; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-backdrop.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: scale(0.95); transition: transform 0.3s ease;
+            max-width: 90%; width: 500px;
+        }
+        .modal-backdrop.show .modal-content { transform: scale(1); }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Main Application Wrapper -->
+    <div id="app-wrapper">
+
+        <!-- Main Complaint Form Page -->
+        <div id="main-page">
+            <!-- Header -->
+            <header class="bg-white shadow-sm sticky top-0 z-50">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-4">
+                        <div class="flex items-center space-x-3">
+                            <!-- LOGO LOCATION: Replace the div below with an img tag for your logo -->
+                            <!-- Example: <img src="your-logo.png" alt="Anekal Portal Logo" class="h-10 w-10"> -->
+                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                A
+                            </div>
+                            <h1 class="text-xl font-bold text-gray-700" data-translate="portalTitleShort">Anekal Grievance Portal</h1>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="showStatusCheckPage()" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors" data-translate="checkStatusBtn">Check Status</button>
+                             <button onclick="toggleLanguage()" class="px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                                <i class="fas fa-language mr-1"></i> <span id="lang-btn-text">ಕನ್ನಡ</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-gray-800" data-translate="title">Grievance Redressal Portal</h2>
+                        <p class="mt-2 text-gray-500 max-w-2xl mx-auto" data-translate="description">
+                            Official portal for Anekal residents to report issues concerning public services and rural development. Your voice matters in building a better community.
+                        </p>
+                    </div>
+
+                    <!-- Stepper -->
+                    <div class="flex items-center justify-center border-b border-gray-200 pb-6 mb-8">
+                        <div class="flex items-center space-x-2 sm:space-x-4 text-sm">
+                            <div id="step-1" class="step step-active flex items-center space-x-2">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-blue-500">1</span>
+                                <span class="hidden sm:inline" data-translate="step1">Personal Details</span>
+                            </div>
+                            <div class="flex-auto border-t-2 transition-colors duration-500 ease-in-out border-gray-300"></div>
+                            <div id="step-2" class="step flex items-center space-x-2 text-gray-500">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-gray-300">2</span>
+                                <span class="hidden sm:inline" data-translate="step2">Complaint Info</span>
+                            </div>
+                             <div class="flex-auto border-t-2 transition-colors duration-500 ease-in-out border-gray-300"></div>
+                            <div id="step-3" class="step flex items-center space-x-2 text-gray-500">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-gray-300">3</span>
+                                <span class="hidden sm:inline" data-translate="step3">Review & Submit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <form id="complaintForm" novalidate>
+                        <!-- Step 1: Personal Details -->
+                        <div id="form-step-1" class="form-step active fade-in">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="name" class="block text-sm font-medium text-gray-700" data-translate="nameLabel">Full Name</label>
+                                    <input type="text" id="name" name="name" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                                </div>
+                                <div>
+                                    <label for="mobile" class="block text-sm font-medium text-gray-700" data-translate="mobileLabel">Mobile Number</label>
+                                    <input type="tel" id="mobile" name="mobile" pattern="[6-9][0-9]{9}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="address" class="block text-sm font-medium text-gray-700" data-translate="addressLabel">Full Address</label>
+                                    <textarea id="address" name="address" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700" data-translate="genderLabel">Gender</label>
+                                    <div class="mt-2 flex space-x-4">
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="gender" value="male" class="form-radio text-blue-600" required><span class="ml-2 text-sm text-gray-600" data-translate="maleLabel">Male</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="gender" value="female" class="form-radio text-blue-600"><span class="ml-2 text-sm text-gray-600" data-translate="femaleLabel">Female</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="gender" value="other" class="form-radio text-blue-600"><span class="ml-2 text-sm text-gray-600" data-translate="otherLabel">Other</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-8 text-right">
+                                <button type="button" onclick="nextStep(2)" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" data-translate="nextBtn">Next</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Complaint Information -->
+                        <div id="form-step-2" class="form-step fade-in">
+                             <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label for="department" class="block text-sm font-medium text-gray-700" data-translate="departmentLabel">Concerned Department</label>
+                                    <select id="department" name="department" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                                        <option value="" data-translate="selectOption">-- Select a Department --</option>
+                                        <option value="panchayat" data-translate="deptPanchayat">Panchayat Development</option>
+                                        <option value="water" data-translate="deptWater">Water Supply & Sanitation</option>
+                                        <option value="roads" data-translate="deptRoads">Roads & Infrastructure</option>
+                                        <option value="electricity" data-translate="deptElectricity">Electricity Board</option>
+                                        <option value="other" data-translate="deptOther">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="problem" class="block text-sm font-medium text-gray-700" data-translate="problemLabel">Describe the Issue</label>
+                                    <textarea id="problem" name="problem" rows="5" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required placeholder-translate="problemPlaceholder"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700" data-translate="attachmentLabel">Attach Files (Optional)</label>
+                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                        <div class="space-y-1 text-center">
+                                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                                            <div class="flex text-sm text-gray-600">
+                                                <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                                    <span data-translate="uploadFile">Upload a file</span>
+                                                    <input id="file-upload" name="file-upload" type="file" class="sr-only" multiple onchange="updateFilePreview()">
+                                                </label>
+                                                <p class="pl-1" data-translate="dragDrop">or drag and drop</p>
+                                            </div>
+                                            <p class="text-xs text-gray-500" data-translate="fileTypes">PNG, JPG, PDF up to 5MB</p>
+                                        </div>
+                                    </div>
+                                    <div id="file-preview" class="mt-4 space-y-2"></div>
+                                </div>
+                            </div>
+                            <div class="mt-8 flex justify-between">
+                                <button type="button" onclick="prevStep(1)" class="py-2 px-6 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-translate="backBtn">Back</button>
+                                <button type="button" onclick="nextStep(3)" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700" data-translate="nextBtn">Next</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Review & Submit -->
+                        <div id="form-step-3" class="form-step fade-in">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900" data-translate="reviewTitle">Review Your Complaint</h3>
+                            <div class="mt-4 border-t border-b border-gray-200 divide-y divide-gray-200">
+                                <div id="review-content" class="py-4 space-y-4"></div>
+                            </div>
+                            <div class="mt-8 flex justify-between items-center">
+                                <button type="button" onclick="prevStep(2)" class="py-2 px-6 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-translate="backBtn">Back</button>
+                                <button type="submit" class="inline-flex items-center justify-center py-3 px-8 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" data-translate="submitBtn">
+                                    <i class="fas fa-check-circle mr-2"></i> Confirm & Submit
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <p class="mt-8 text-center text-xs text-gray-500" data-translate="privacy">
+                        <i class="fas fa-lock mr-1"></i> Your information will be kept confidential and used only for the purpose of addressing your complaint.
+                    </p>
+                </div>
+            </main>
+        </div>
+
+        <!-- Status Check Page -->
+        <div id="status-page" class="hidden">
+             <header class="bg-white shadow-sm">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-4">
+                        <div class="flex items-center space-x-3">
+                            <!-- LOGO LOCATION: Replace the div below with an img tag for your logo -->
+                            <!-- Example: <img src="your-logo.png" alt="Anekal Portal Logo" class="h-10 w-10"> -->
+                             <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl"> A </div>
+                            <h1 class="text-xl font-bold text-gray-700" data-translate="portalTitleShort">Anekal Grievance Portal</h1>
+                        </div>
+                         <button onclick="showMainPage()" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                            <i class="fas fa-arrow-left mr-1"></i> <span data-translate="backToHome">Back to Home</span>
+                         </button>
+                    </div>
+                </div>
+            </header>
+            <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                 <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                     <div class="text-center">
+                        <h2 class="text-3xl font-bold text-gray-800" data-translate="statusCheckTitle">Check Complaint Status</h2>
+                        <p class="mt-2 text-gray-500" data-translate="statusCheckDesc">Enter the Complaint ID you received upon submission.</p>
+                    </div>
+                    <div class="mt-8 max-w-lg mx-auto">
+                        <input type="text" id="complaint-id-input" class="block w-full px-4 py-3 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder-translate="complaintIdPlaceholder">
+                        <button onclick="checkStatus()" class="mt-4 w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700" data-translate="checkStatusBtn">Check Status</button>
+                    </div>
+                    <div id="status-result" class="mt-8 hidden"></div>
+                    
+                    <div class="mt-12 border-t pt-8 text-center">
+                         <button onclick="loadAllComplaints()" class="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700" data-translate="loadAllBtn">Load All Complaints</button>
+                         <div id="all-complaints-container" class="mt-6 text-left hidden"></div>
+                    </div>
+                 </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal-backdrop">
+        <div class="modal-content text-center">
+            <div id="modal-icon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full"></div>
+            <h3 id="modal-title" class="mt-5 text-lg font-medium text-gray-900"></h3>
+            <div class="mt-2 text-sm text-gray-500"><p id="modal-message"></p></div>
+            <div class="mt-5">
+                <button type="button" onclick="closeModal()" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- FIREBASE CONFIGURATION ---
+        // These variables are placeholders and will be provided by the environment.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "your-api-key", authDomain: "your-auth-domain", projectId: "your-project-id" };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // --- FIREBASE INITIALIZATION ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- AUTHENTICATION ---
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("Firebase Auth Error:", error);
+        }
+
+        // Expose db and other necessary Firebase functions to the global scope for the other script tag
+        window.db = db;
+        window.fb = { doc, getDoc, setDoc, collection, getDocs, Timestamp };
+        window.appId = appId;
+
+    </script>
+
+    <script>
+        // --- STATE MANAGEMENT ---
+        let currentStep = 1;
+        let currentLanguage = 'en';
+        let uploadedFiles = [];
+
+        // --- TRANSLATIONS ---
+        const translations = {
+            en: {
+                portalTitleShort: "Anekal Grievance Portal", title: "Grievance Redressal Portal", description: "Official portal for Anekal residents to report issues concerning public services and rural development. Your voice matters in building a better community.",
+                step1: "Personal Details", step2: "Complaint Info", step3: "Review & Submit",
+                nameLabel: "Full Name", mobileLabel: "Mobile Number", addressLabel: "Full Address", genderLabel: "Gender", maleLabel: "Male", femaleLabel: "Female", otherLabel: "Other",
+                departmentLabel: "Concerned Department", selectOption: "-- Select a Department --", deptPanchayat: "Panchayat Development", deptWater: "Water Supply & Sanitation", deptRoads: "Roads & Infrastructure", deptElectricity: "Electricity Board", deptOther: "Other",
+                problemLabel: "Describe the Issue", problemPlaceholder: "Please describe your problem in detail...",
+                attachmentLabel: "Attach Files (Optional)", uploadFile: "Upload a file", dragDrop: "or drag and drop", fileTypes: "PNG, JPG, PDF up to 5MB",
+                reviewTitle: "Review Your Complaint", nextBtn: "Next", backBtn: "Back", submitBtn: "Confirm & Submit",
+                privacy: "Your information will be kept confidential and used only for the purpose of addressing your complaint.", langBtnText: "ಕನ್ನಡ",
+                checkStatusBtn: "Check Status", backToHome: "Back to Home", statusCheckTitle: "Check Complaint Status", statusCheckDesc: "Enter the Complaint ID you received upon submission.", complaintIdPlaceholder: "Enter your Complaint ID...",
+                successTitle: "Submission Successful!", successMessage: "Your complaint has been registered. Your Complaint ID is:",
+                errorTitle: "Validation Error", errorMessage: "Please fill out all required fields in the current step.",
+                statusNotFound: "Complaint ID not found. Please check the ID and try again.", statusFoundTitle: "Complaint Status",
+                loadAllBtn: "Load All Complaints", allComplaintsTitle: "All Submitted Grievances", noComplaints: "No complaints have been submitted yet.",
+                colId: "ID", colName: "Name", colDept: "Department", colStatus: "Status", colDate: "Date"
+            },
+            kn: {
+                portalTitleShort: "ಅನೇಕಲ್ ದೂರು ಪೋರ್ಟಲ್", title: "ದೂರು ಪರಿಹಾರ ಪೋರ್ಟಲ್", description: "ಸಾರ್ವಜನಿಕ ಸೇವೆಗಳು ಮತ್ತು ಗ್ರಾಮೀಣಾಭಿವೃದ್ಧಿಗೆ ಸಂಬಂಧಿಸಿದ ಸಮಸ್ಯೆಗಳನ್ನು ವರದಿ ಮಾಡಲು ಅನೇಕಲ್ ನಿವಾಸಿಗಳಿಗೆ ಅಧಿಕೃತ ಪೋರ್ಟಲ್. ಉತ್ತಮ ಸಮುದಾಯವನ್ನು ನಿರ್ಮಿಸುವಲ್ಲಿ ನಿಮ್ಮ ಧ್ವನಿ ಮುಖ್ಯವಾಗಿದೆ.",
+                step1: "ವೈಯಕ್ತಿಕ ವಿವರಗಳು", step2: "ದೂರಿನ ಮಾಹಿತಿ", step3: "ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಸಲ್ಲಿಸಿ",
+                nameLabel: "ಪೂರ್ಣ ಹೆಸರು", mobileLabel: "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ", addressLabel: "ಪೂರ್ಣ ವಿಳಾಸ", genderLabel: "ಲಿಂಗ", maleLabel: "ಪುರುಷ", femaleLabel: "ಮಹಿಳೆ", otherLabel: "ಇತರೆ",
+                departmentLabel: "ಸಂಬಂಧಪಟ್ಟ ಇಲಾಖೆ", selectOption: "-- ಇಲಾಖೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ --", deptPanchayat: "ಪಂಚಾಯತ್ ಅಭಿವೃದ್ಧಿ", deptWater: "ನೀರು ಸರಬರಾಜು ಮತ್ತು ನೈರ್ಮಲ್ಯ", deptRoads: "ರಸ್ತೆಗಳು ಮತ್ತು ಮೂಲಸೌಕರ್ಯ", deptElectricity: "ವಿದ್ಯುತ್ ಮಂಡಳಿ", deptOther: "ಇತರೆ",
+                problemLabel: "ಸಮಸ್ಯೆಯನ್ನು ವಿವರಿಸಿ", problemPlaceholder: "ದಯವಿಟ್ಟು ನಿಮ್ಮ ಸಮಸ್ಯೆಯನ್ನು ವಿವರವಾಗಿ ವಿವರಿಸಿ...",
+                attachmentLabel: "ಫೈಲ್‌ಗಳನ್ನು ಲಗತ್ತಿಸಿ (ಐಚ್ಛಿಕ)", uploadFile: "ಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ", dragDrop: "ಅಥವಾ ಡ್ರ್ಯಾಗ್ ಮತ್ತು ಡ್ರಾಪ್ ಮಾಡಿ", fileTypes: "PNG, JPG, PDF 5MB ವರೆಗೆ",
+                reviewTitle: "ನಿಮ್ಮ ದೂರನ್ನು ಪರಿಶೀಲಿಸಿ", nextBtn: "ಮುಂದೆ", backBtn: "ಹಿಂದೆ", submitBtn: "ದೃಢೀಕರಿಸಿ ಮತ್ತು ಸಲ್ಲಿಸಿ",
+                privacy: "ನಿಮ್ಮ ಮಾಹಿತಿಯನ್ನು ಗೌಪ್ಯವಾಗಿ ಇರಿಸಲಾಗುತ್ತದೆ ಮತ್ತು ನಿಮ್ಮ ದೂರನ್ನು ಪರಿಹರಿಸುವ ಉದ್ದೇಶಕ್ಕಾಗಿ ಮಾತ್ರ ಬಳಸಲಾಗುತ್ತದೆ.", langBtnText: "English",
+                checkStatusBtn: "ಸ್ಥಿತಿ ಪರಿಶೀಲಿಸಿ", backToHome: "ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ", statusCheckTitle: "ದೂರಿನ ಸ್ಥಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ", statusCheckDesc: "ಸಲ್ಲಿಕೆಯ ನಂತರ ನೀವು ಪಡೆದ ದೂರು ಐಡಿಯನ್ನು ನಮೂದಿಸಿ.", complaintIdPlaceholder: "ನಿಮ್ಮ ದೂರು ಐಡಿಯನ್ನು ನಮೂದಿಸಿ...",
+                successTitle: "ಯಶಸ್ವಿಯಾಗಿ ಸಲ್ಲಿಸಲಾಗಿದೆ!", successMessage: "ನಿಮ್ಮ ದೂರನ್ನು ನೋಂದಾಯಿಸಲಾಗಿದೆ. ನಿಮ್ಮ ದೂರು ಐಡಿ:",
+                errorTitle: "ದೃಢೀಕರಣ ದೋಷ", errorMessage: "ದಯವಿಟ್ಟು ಪ್ರಸ್ತುತ ಹಂತದಲ್ಲಿ ಅಗತ್ಯವಿರುವ ಎಲ್ಲಾ ಕ್ಷೇತ್ರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.",
+                statusNotFound: "ದೂರು ಐಡಿ ಕಂಡುಬಂದಿಲ್ಲ. ದಯವಿಟ್ಟು ಐಡಿಯನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", statusFoundTitle: "ದೂರಿನ ಸ್ಥಿತಿ",
+                loadAllBtn: "ಎಲ್ಲಾ ದೂರುಗಳನ್ನು ಲೋಡ್ ಮಾಡಿ", allComplaintsTitle: "ಸಲ್ಲಿಸಲಾದ ಎಲ್ಲಾ ದೂರುಗಳು", noComplaints: "ಇನ್ನೂ ಯಾವುದೇ ದೂರುಗಳನ್ನು ಸಲ್ಲಿಸಲಾಗಿಲ್ಲ.",
+                colId: "ಐಡಿ", colName: "ಹೆಸರು", colDept: "ಇಲಾಖೆ", colStatus: "ಸ್ಥಿತಿ", colDate: "ದಿನಾಂಕ"
+            }
+        };
+
+        // --- UI NAVIGATION ---
+        function showMainPage() {
+            document.getElementById('main-page').classList.remove('hidden');
+            document.getElementById('status-page').classList.add('hidden');
+        }
+        function showStatusCheckPage() {
+            document.getElementById('main-page').classList.add('hidden');
+            document.getElementById('status-page').classList.remove('hidden');
+        }
+
+        // --- FORM STEP LOGIC ---
+        function nextStep(step) {
+            if (validateStep(currentStep)) {
+                document.getElementById(`form-step-${currentStep}`).classList.remove('active');
+                document.getElementById(`form-step-${step}`).classList.add('active');
+                updateStepper(step);
+                currentStep = step;
+                if (step === 3) populateReview();
+            } else {
+                showModal('error', translations[currentLanguage].errorTitle, translations[currentLanguage].errorMessage);
+            }
+        }
+        function prevStep(step) {
+            document.getElementById(`form-step-${currentStep}`).classList.remove('active');
+            document.getElementById(`form-step-${step}`).classList.add('active');
+            updateStepper(step);
+            currentStep = step;
+        }
+        function updateStepper(step) {
+            document.querySelectorAll('.step').forEach((s, index) => {
+                const stepNumber = index + 1;
+                const stepEl = document.getElementById(`step-${stepNumber}`);
+                const stepIcon = stepEl.querySelector('span:first-child');
+                const line = stepEl.previousElementSibling;
+                if (stepNumber < step) {
+                    stepEl.classList.remove('step-active'); stepEl.classList.add('step-completed');
+                    stepIcon.innerHTML = '<i class="fas fa-check"></i>';
+                    stepIcon.classList.remove('border-blue-500', 'border-gray-300'); stepIcon.classList.add('border-green-500');
+                    if(line) line.classList.add('border-green-500');
+                } else if (stepNumber === step) {
+                    stepEl.classList.add('step-active'); stepEl.classList.remove('step-completed', 'text-gray-500');
+                    stepIcon.classList.add('border-blue-500'); stepIcon.classList.remove('border-green-500', 'border-gray-300');
+                    if(line) line.classList.remove('border-green-500');
+                } else {
+                    stepEl.classList.remove('step-active', 'step-completed'); stepEl.classList.add('text-gray-500');
+                    stepIcon.innerHTML = stepNumber;
+                    stepIcon.classList.add('border-gray-300'); stepIcon.classList.remove('border-blue-500', 'border-green-500');
+                    if(line) line.classList.remove('border-green-500');
+                }
+            });
+        }
+        function validateStep(step) {
+            const inputs = document.querySelectorAll(`#form-step-${step} [required]`);
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!input.checkValidity()) {
+                    isValid = false;
+                    input.classList.add('border-red-500');
+                } else {
+                    input.classList.remove('border-red-500');
+                }
+            });
+            return isValid;
+        }
+
+        // --- LANGUAGE TOGGLE ---
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'kn' : 'en';
+            updateUIForLanguage();
+        }
+        function updateUIForLanguage() {
+            const trans = translations[currentLanguage];
+            document.documentElement.lang = currentLanguage;
+            document.getElementById('lang-btn-text').textContent = trans.langBtnText;
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (trans[key]) el.innerHTML = trans[key];
+            });
+            document.querySelectorAll('[placeholder-translate]').forEach(el => {
+                const key = el.getAttribute('placeholder-translate');
+                if (trans[key]) el.placeholder = trans[key];
+            });
+        }
+        
+        // --- FILE HANDLING ---
+        function updateFilePreview() {
+            const previewContainer = document.getElementById('file-preview');
+            const files = document.getElementById('file-upload').files;
+            previewContainer.innerHTML = '';
+            uploadedFiles = Array.from(files);
+            uploadedFiles.forEach((file, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'flex items-center justify-between bg-gray-100 p-2 rounded-md';
+                fileDiv.innerHTML = `<div class="flex items-center space-x-2 overflow-hidden"><i class="fas fa-file-alt text-gray-500"></i><span class="text-sm text-gray-700 truncate">${file.name}</span></div><button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700">&times;</button>`;
+                previewContainer.appendChild(fileDiv);
+            });
+        }
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            const fileInput = document.getElementById('file-upload');
+            const dataTransfer = new DataTransfer();
+            uploadedFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+            updateFilePreview();
+        }
+
+        // --- REVIEW & SUBMIT ---
+        function populateReview() {
+            const form = document.getElementById('complaintForm');
+            const formData = new FormData(form);
+            const reviewContent = document.getElementById('review-content');
+            const departmentSelect = form.querySelector('#department');
+            const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+            const departmentText = selectedOption.textContent;
+            const genderRadio = form.querySelector('input[name="gender"]:checked');
+            const genderText = genderRadio ? genderRadio.nextElementSibling.textContent : 'Not specified';
+            const reviewData = {
+                [translations[currentLanguage].nameLabel]: formData.get('name'), [translations[currentLanguage].mobileLabel]: formData.get('mobile'),
+                [translations[currentLanguage].addressLabel]: formData.get('address'), [translations[currentLanguage].genderLabel]: genderText,
+                [translations[currentLanguage].departmentLabel]: departmentText, [translations[currentLanguage].problemLabel]: formData.get('problem'),
+                [translations[currentLanguage].attachmentLabel]: uploadedFiles.length > 0 ? `${uploadedFiles.length} file(s) attached` : 'None'
+            };
+            reviewContent.innerHTML = '';
+            for (const [key, value] of Object.entries(reviewData)) {
+                const div = document.createElement('div');
+                div.className = 'sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 py-3';
+                div.innerHTML = `<dt class="text-sm font-medium text-gray-500">${key}</dt><dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">${value || '-'}</dd>`;
+                reviewContent.appendChild(div);
+            }
+        }
+
+        document.getElementById('complaintForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!validateStep(1) || !validateStep(2)) {
+                 showModal('error', translations[currentLanguage].errorTitle, "Please go back and fill all required fields.");
+                 return;
+            }
+
+            const complaintId = `ANKL-${Date.now().toString().slice(-6)}`;
+            const submitButton = e.submitter;
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<div class="loader" style="width:20px; height:20px; border-width:2px;"></div>`;
+
+            const formData = new FormData(this);
+            const dataToSave = {
+                name: formData.get('name'), mobile: formData.get('mobile'), address: formData.get('address'),
+                gender: formData.get('gender'), department: formData.get('department'), problem: formData.get('problem'),
+                fileCount: uploadedFiles.length, status: "Submitted", timestamp: window.fb.Timestamp.now()
+            };
+
+            try {
+                const docRef = window.fb.doc(window.db, `/artifacts/${window.appId}/public/data/complaints`, complaintId);
+                await window.fb.setDoc(docRef, dataToSave);
+                
+                showModal('success', translations[currentLanguage].successTitle, `${translations[currentLanguage].successMessage} <strong>${complaintId}</strong>`);
+                
+                this.reset();
+                uploadedFiles = [];
+                updateFilePreview();
+                currentStep = 1;
+                updateStepper(1);
+                document.getElementById('form-step-3').classList.remove('active');
+                document.getElementById('form-step-1').classList.add('active');
+            } catch (error) {
+                console.error("Error writing document: ", error);
+                showModal('error', 'Submission Failed', 'Could not save your complaint. Please try again.');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${translations[currentLanguage].submitBtn}`;
+            }
+        });
+
+        // --- STATUS CHECK LOGIC ---
+        async function checkStatus() {
+            const id = document.getElementById('complaint-id-input').value.trim().toUpperCase();
+            if (!id) return;
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.innerHTML = `<div class="loader"></div>`;
+            resultDiv.classList.remove('hidden');
+
+            try {
+                const docRef = window.fb.doc(window.db, `/artifacts/${window.appId}/public/data/complaints`, id);
+                const docSnap = await window.fb.getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const submittedDate = data.timestamp.toDate().toLocaleString();
+                    resultDiv.innerHTML = `<h3 class="text-lg font-medium text-gray-900">${translations[currentLanguage].statusFoundTitle}</h3><div class="mt-4 border-t border-gray-200"><dl class="sm:divide-y sm:divide-gray-200"><div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt class="text-sm font-medium text-gray-500">Complaint ID</dt><dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">${id}</dd></div><div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt class="text-sm font-medium text-gray-500">Status</dt><dd class="mt-1 text-sm sm:mt-0 sm:col-span-2"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${data.status}</span></dd></div><div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt class="text-sm font-medium text-gray-500">Submitted On</dt><dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">${submittedDate}</dd></div></dl></div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="text-center py-4"><i class="fas fa-exclamation-circle text-red-500 text-3xl"></i><p class="mt-2 text-sm text-gray-600">${translations[currentLanguage].statusNotFound}</p></div>`;
+                }
+            } catch (error) {
+                console.error("Error fetching status:", error);
+                resultDiv.innerHTML = `<div class="text-center py-4"><p class="mt-2 text-sm text-red-600">Could not fetch status. Please try again.</p></div>`;
+            }
+        }
+
+        // --- LOAD ALL COMPLAINTS ---
+        async function loadAllComplaints() {
+            const container = document.getElementById('all-complaints-container');
+            container.innerHTML = `<div class="loader"></div>`;
+            container.classList.remove('hidden');
+
+            try {
+                const complaintsRef = window.fb.collection(window.db, `/artifacts/${window.appId}/public/data/complaints`);
+                const querySnapshot = await window.fb.getDocs(complaintsRef);
+                
+                if (querySnapshot.empty) {
+                    container.innerHTML = `<p class="text-gray-500 text-center">${translations[currentLanguage].noComplaints}</p>`;
+                    return;
+                }
+
+                let tableHTML = `<h3 class="text-xl font-bold mb-4 text-center" data-translate="allComplaintsTitle">${translations[currentLanguage].allComplaintsTitle}</h3><div class="overflow-x-auto"><table class="min-w-full bg-white border rounded-lg"><thead><tr class="bg-gray-100 text-left text-sm font-semibold">
+                    <th class="p-3" data-translate="colId">${translations[currentLanguage].colId}</th>
+                    <th class="p-3" data-translate="colName">${translations[currentLanguage].colName}</th>
+                    <th class="p-3" data-translate="colDept">${translations[currentLanguage].colDept}</th>
+                    <th class="p-3" data-translate="colStatus">${translations[currentLanguage].colStatus}</th>
+                    <th class="p-3" data-translate="colDate">${translations[currentLanguage].colDate}</th>
+                </tr></thead><tbody>`;
+
+                const complaints = [];
+                querySnapshot.forEach(doc => {
+                    complaints.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by timestamp, newest first
+                complaints.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+
+                complaints.forEach(data => {
+                    const deptKey = 'dept' + data.department.charAt(0).toUpperCase() + data.department.slice(1);
+                    tableHTML += `<tr class="border-b hover:bg-gray-50 text-sm">
+                        <td class="p-3 font-mono text-xs">${data.id}</td>
+                        <td class="p-3">${data.name}</td>
+                        <td class="p-3">${translations[currentLanguage][deptKey] || data.department}</td>
+                        <td class="p-3"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${data.status}</span></td>
+                        <td class="p-3">${data.timestamp.toDate().toLocaleDateString()}</td>
+                    </tr>`;
+                });
+
+                tableHTML += `</tbody></table></div>`;
+                container.innerHTML = tableHTML;
+
+            } catch (error) {
+                console.error("Error loading complaints:", error);
+                container.innerHTML = `<p class="text-red-500 text-center">Failed to load complaints.</p>`;
+            }
+        }
+
+        // --- MODAL LOGIC ---
+        function showModal(type, title, message) {
+            const modal = document.getElementById('custom-modal');
+            const iconDiv = document.getElementById('modal-icon');
+            const titleEl = document.getElementById('modal-title');
+            const messageEl = document.getElementById('modal-message');
+            if (type === 'success') {
+                iconDiv.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100';
+                iconDiv.innerHTML = `<i class="fas fa-check text-2xl text-green-600"></i>`;
+            } else {
+                iconDiv.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100';
+                iconDiv.innerHTML = `<i class="fas fa-times text-2xl text-red-600"></i>`;
+            }
+            titleEl.textContent = title;
+            messageEl.innerHTML = message;
+            modal.classList.add('show');
+        }
+        function closeModal() {
+            document.getElementById('custom-modal').classList.remove('show');
+        }
+        
+        // Initial language setup
+        updateUIForLanguage();
+
+        // Make functions globally accessible
+        window.showMainPage = showMainPage;
+        window.showStatusCheckPage = showStatusCheckPage;
+        window.nextStep = nextStep;
+        window.prevStep = prevStep;
+        window.toggleLanguage = toggleLanguage;
+        window.updateFilePreview = updateFilePreview;
+        window.removeFile = removeFile;
+        window.checkStatus = checkStatus;
+        window.loadAllComplaints = loadAllComplaints;
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
